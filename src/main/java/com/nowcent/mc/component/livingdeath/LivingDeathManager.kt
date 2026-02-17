@@ -3,6 +3,7 @@ package com.nowcent.mc.component.livingdeath
 import com.mojang.logging.LogUtils
 import com.nowcent.mc.Config
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import net.minecraft.world.entity.player.Player
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent
@@ -37,7 +38,7 @@ object LivingDeathManager {
 
         val request = HttpRequest.newBuilder()
             .uri(URI.create(config.url))
-            .POST(HttpRequest.BodyPublishers.ofString(json.toString()))
+            .POST(HttpRequest.BodyPublishers.ofString(Json.encodeToString(json)))
             .header("Content-Type", "application/json; charset=utf-8")
             .header("Authorization", config.auth)
             .version(HttpClient.Version.HTTP_1_1)

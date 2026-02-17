@@ -4,6 +4,7 @@ plugins {
     id 'net.neoforged.moddev' version '2.0.134'
     id 'idea'
     id 'org.jetbrains.kotlin.jvm'
+    id 'org.jetbrains.kotlin.plugin.serialization' version "2.3.0"
 }
 
 tasks.named('wrapper', Wrapper).configure {
