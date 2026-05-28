@@ -10,9 +10,13 @@ import net.neoforged.neoforge.common.ModConfigSpec
 object Config {
     private lateinit var livingDeathURL: ModConfigSpec.ConfigValue<String>
     private lateinit var livingDeathAuth: ModConfigSpec.ConfigValue<String>
+    private lateinit var prometheusPortConfig: ModConfigSpec.IntValue
 
     val livingDeath: LivingDeathConfig
         get() = LivingDeathConfig(url = livingDeathURL.get(), auth = livingDeathAuth.get())
+
+    val prometheusPort: Int
+        get() = prometheusPortConfig.get()
 
     val spec: ModConfigSpec
 
@@ -24,6 +28,10 @@ object Config {
 
             comment("Living Death Notification Auth")
             livingDeathAuth = define("auth", "")
+        }
+        builder.into("prometheus") {
+            comment("Prometheus metrics HTTP server port. Set to 0 to disable.")
+            prometheusPortConfig = defineInRange("port", 9225, 0, 65535)
         }
         spec = builder.build()
     }
