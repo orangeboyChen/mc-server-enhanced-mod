@@ -135,9 +135,10 @@ object PrometheusMetricsServer {
                         val itemStack = stackField.get(bigItemStack)
                         val count = countField.getInt(bigItemStack)
 
-                        val itemName = getItemRegistryName(itemStack) ?: continue
+                        val itemId = getItemRegistryName(itemStack) ?: continue
+                        val itemName = getItemDisplayName(itemStack) ?: itemId
 
-                        appendLine("minecraft_create_storage_item_count{network=\"$networkId\",item=\"$itemName\"} $count")
+                        appendLine("minecraft_create_storage_item_count{network=\"$networkId\",item_id=\"$itemId\",item_name=\"$itemName\"} $count")
                     }
                 } catch (e: Exception) {
                     logger.warn("[PrometheusMetrics] Error processing network $networkId: ${e.javaClass.simpleName}: ${e.message}")
@@ -188,6 +189,18 @@ object PrometheusMetricsServer {
             val getKeyMethod = itemRegistry.javaClass.getMethod("getKey", Any::class.java)
             val resourceLocation = getKeyMethod.invoke(itemRegistry, item)
             resourceLocation?.toString()
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    private fun getItemDisplayName(itemStack: Any): String? {
+        return try {
+            // ItemStack.getHoverName() returns Component, then .getString() for plain text
+            val getHoverNameMethod = itemStack.javaClass.getMethod("getHoverName")
+            val component = getHoverNameMethod.invoke(itemStack)
+            val getStringMethod = component.javaClass.getMethod("getString")
+            getStringMethod.invoke(component)?.toString()
         } catch (e: Exception) {
             null
         }
