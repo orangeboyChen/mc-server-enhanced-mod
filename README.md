@@ -1,25 +1,49 @@
+# Server Enhanced Mod
 
-Installation information
-=======
+A NeoForge server-side mod for Minecraft 1.21, designed for internal use. It provides utility features to enhance server administration and monitoring.
 
-This template repository can be directly cloned to get you started with a new
-mod. Simply create a new repository cloned from this one, by following the
-instructions provided by [GitHub](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
+## Features
 
-Once you have your clone, simply open the repository in the IDE of your choice. The usual recommendation for an IDE is either IntelliJ IDEA or Eclipse.
+### Prometheus Metrics Exporter
+Exposes server metrics via an HTTP endpoint (`/metrics`) in Prometheus format for monitoring and alerting.
 
-If at any point you are missing libraries in your IDE, or you've run into problems you can
-run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 
-{this does not affect your code} and then start the process again.
+- Configurable port (default: `9225`, set to `0` to disable)
+- Zero external dependencies — uses plain Java sockets
 
-Mapping Names:
-============
-By default, the MDK is configured to use the official mapping names from Mojang for methods and fields 
-in the Minecraft codebase. These names are covered by a specific license. All modders should be aware of this
-license. For the latest license text, refer to the mapping file itself, or the reference copy here:
-https://github.com/NeoForged/NeoForm/blob/main/Mojang.md
+### Player Death Notification
+Sends a webhook notification (HTTP POST with JSON body) when a player dies, including the death message.
 
-Additional Resources: 
-==========
-Community Documentation: https://docs.neoforged.net/  
-NeoForged Discord: https://discord.neoforged.net/
+- Configurable URL and auth header
+
+### Location Cache
+In-game command system (`/location`) for saving, retrieving, and removing named coordinates — useful for quickly sharing points of interest among players.
+
+## Configuration
+
+Server config is generated at `serverconfig/serverenhancedmod-server.toml`:
+
+```toml
+[living-death-notification]
+url = ""
+auth = ""
+
+[prometheus]
+port = 9225
+```
+
+## Build
+
+```bash
+./gradlew build
+```
+
+Output jar is located in `build/libs/`.
+
+## Release
+
+Push a version tag to trigger a GitHub Actions build and publish to GitHub Releases:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
