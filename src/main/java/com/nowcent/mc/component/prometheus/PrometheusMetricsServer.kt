@@ -108,37 +108,45 @@ object PrometheusMetricsServer {
             )
 
             val networkIds = getActiveNetworkIds()
-            if (networkIds.isEmpty()) return
+            if (networkIds.isEmpty()) {
+                logger.debug("[PrometheusMetrics] No active logistics networks found")
+                return
+            }
 
             appendLine("# HELP minecraft_logistics_item_count Total count of items in a Create logistics network")
             appendLine("# TYPE minecraft_logistics_item_count gauge")
 
             for (networkId in networkIds) {
-                val summary = getSummaryMethod.invoke(null, networkId, false) ?: continue
-                val summaryClass = summary.javaClass
+                try {
+                    val summary = getSummaryMethod.invoke(null, networkId, false) ?: continue
+                    val summaryClass = summary.javaClass
 
-                val getStacksMethod = summaryClass.getMethod("getStacks")
-                val stacks = getStacksMethod.invoke(summary) as? List<*> ?: continue
+                    // Use getStacksByCount() for sorted results
+                    val getStacksMethod = summaryClass.getMethod("getStacksByCount")
+                    val stacks = getStacksMethod.invoke(summary) as? List<*> ?: continue
 
-                for (bigItemStack in stacks) {
-                    if (bigItemStack == null) continue
-                    val bigItemStackClass = bigItemStack.javaClass
+                    for (bigItemStack in stacks) {
+                        if (bigItemStack == null) continue
+                        val bigItemStackClass = bigItemStack.javaClass
 
-                    val stackField = bigItemStackClass.getField("stack")
-                    val countField = bigItemStackClass.getField("count")
+                        val stackField = bigItemStackClass.getField("stack")
+                        val countField = bigItemStackClass.getField("count")
 
-                    val itemStack = stackField.get(bigItemStack)
-                    val count = countField.getInt(bigItemStack)
+                        val itemStack = stackField.get(bigItemStack)
+                        val count = countField.getInt(bigItemStack)
 
-                    val itemName = getItemRegistryName(itemStack) ?: continue
+                        val itemName = getItemRegistryName(itemStack) ?: continue
 
-                    appendLine("minecraft_logistics_item_count{network=\"$networkId\",item=\"$itemName\"} $count")
+                        appendLine("minecraft_logistics_item_count{network=\"$networkId\",item=\"$itemName\"} $count")
+                    }
+                } catch (e: Exception) {
+                    logger.warn("[PrometheusMetrics] Error processing network $networkId: ${e.javaClass.simpleName}: ${e.message}")
                 }
             }
         } catch (e: ClassNotFoundException) {
-            // Create mod not installed, skip
+            logger.warn("[PrometheusMetrics] Create mod not found, skipping logistics metrics")
         } catch (e: Exception) {
-            logger.debug("[PrometheusMetrics] Error collecting logistics metrics: ${e.message}")
+            logger.warn("[PrometheusMetrics] Error collecting logistics metrics: ${e.javaClass.simpleName}: ${e.message}", e)
         }
     }
 
@@ -149,11 +157,21 @@ object PrometheusMetricsServer {
             val createClass = Class.forName("com.simibubi.create.Create")
             val logisticsField = createClass.getField("LOGISTICS")
             val globalLogisticsManager = logisticsField.get(null)
+                ?: run {
+                    logger.warn("[PrometheusMetrics] LOGISTICS field is null")
+                    return emptySet()
+                }
 
             val networksField = globalLogisticsManager.javaClass.getField("logisticsNetworks")
             val networks = networksField.get(globalLogisticsManager) as? Map<java.util.UUID, *>
-            networks?.keys ?: emptySet()
+            if (networks == null) {
+                logger.warn("[PrometheusMetrics] logisticsNetworks field is null")
+                return emptySet()
+            }
+            logger.debug("[PrometheusMetrics] Found ${networks.size} logistics networks")
+            networks.keys
         } catch (e: Exception) {
+            logger.warn("[PrometheusMetrics] Error getting network IDs: ${e.javaClass.simpleName}: ${e.message}")
             emptySet()
         }
     }
