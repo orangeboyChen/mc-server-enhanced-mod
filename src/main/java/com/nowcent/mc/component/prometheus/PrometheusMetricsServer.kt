@@ -113,8 +113,8 @@ object PrometheusMetricsServer {
                 return
             }
 
-            appendLine("# HELP minecraft_logistics_item_count Total count of items in a Create logistics network")
-            appendLine("# TYPE minecraft_logistics_item_count gauge")
+            appendLine("# HELP minecraft_create_storage_item_count Total count of items in a Create mod logistics storage network")
+            appendLine("# TYPE minecraft_create_storage_item_count gauge")
 
             for (networkId in networkIds) {
                 try {
@@ -137,7 +137,7 @@ object PrometheusMetricsServer {
 
                         val itemName = getItemRegistryName(itemStack) ?: continue
 
-                        appendLine("minecraft_logistics_item_count{network=\"$networkId\",item=\"$itemName\"} $count")
+                        appendLine("minecraft_create_storage_item_count{network=\"$networkId\",item=\"$itemName\"} $count")
                     }
                 } catch (e: Exception) {
                     logger.warn("[PrometheusMetrics] Error processing network $networkId: ${e.javaClass.simpleName}: ${e.message}")
